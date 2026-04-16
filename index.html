@@ -1,0 +1,1058 @@
+`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compiler Design Lab – All 12 Tasks</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Sora:wght@300;600;800&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --card: #1a1e2a;
+    --border: #252a38;
+    --accent: #4f9cf9;
+    --accent2: #f97b4f;
+    --green: #4fd994;
+    --yellow: #f9d44f;
+    --text: #d0d8f0;
+    --muted: #6b7599;
+    --code-bg: #0a0c12;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    line-height: 1.7;
+    padding: 20px;
+  }
+
+  header {
+    text-align: center;
+    padding: 40px 20px 30px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -1px;
+  }
+
+  header p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 6px;
+  }
+
+  .task {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 36px;
+    overflow: hidden;
+  }
+
+  .task-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 22px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .task-num {
+    background: var(--accent);
+    color: #000;
+    font-weight: 800;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    padding: 3px 10px;
+    white-space: nowrap;
+  }
+
+  .task-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .info-box {
+    background: #151a26;
+    border-left: 3px solid var(--green);
+    margin: 16px 20px 0;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.82rem;
+    color: #a8c8b0;
+  }
+
+  .info-box strong {
+    color: var(--green);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  pre {
+    margin: 16px 20px 20px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.65;
+    color: #c9d1e8;
+  }
+
+  .kw  { color: #79b8ff; }   /* keywords */
+  .fn  { color: #b3d9ff; }   /* functions */
+  .str { color: #9ecbff; }   /* strings */
+  .cm  { color: #546e7a; font-style: italic; } /* comments */
+  .num { color: #f9d44f; }   /* numbers */
+  .pp  { color: #f97b4f; }   /* preprocessor */
+  .type{ color: #4fd994; }   /* types */
+
+  .note {
+    background: #1a1608;
+    border-left: 3px solid var(--yellow);
+    margin: 0 20px 20px;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.78rem;
+    color: #c8b870;
+  }
+  .note strong { color: var(--yellow); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Compiler Design Lab</h1>
+  <p>GR22A3121 · III B.Tech II Semester · All 12 Tasks – Clean &amp; Corrected Code</p>
+</header>
+
+<!-- ═══════════════════════════════════════════════════ TASK 1 -->
+<div class="task">
+  <div class="task-header">
+    <span class="task-num">TASK 01</span>
+    <span class="task-title">Lexical Analyser for a given language</span>
+  </div>
+  <div class="info-box">
+    <strong>📌 Concept</strong>
+    A <b>Lexical Analyser</b> is the first phase of a compiler. It reads source code character by character and groups them into <b>tokens</b> (keywords, identifiers, operators, numbers, etc.). It ignores whitespace, tabs, and comments. Keywords are matched against a fixed list (32 C keywords here). Identifiers followed by <code>(</code> are treated as function/method names.
+  </div>
+  <pre>
+<span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;stdlib.h&gt;</span>
+<span class="pp">#include &lt;string.h&gt;</span>
+<span class="pp">#include &lt;ctype.h&gt;</span>
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">char</span> *s = (<span class="kw">char</span> *)calloc(<span class="kw">sizeof</span>(<span class="kw">char</span>), <span class="num">20000</span>);
+    <span class="kw">char</span> *t = (<span class="kw">char</span> *)calloc(<span class="kw">sizeof</span>(<span class="kw">char</span>), <span class="num">20000</span>);
+    <span class="kw">char</span> key[<span class="num">32</span>][<span class="num">12</span>] = {
+        <span class="str">"auto"</span>,<span class="str">"break"</span>,<span class="str">"case"</span>,<span class="str">"char"</span>,<span class="str">"const"</span>,<span class="str">"continue"</span>,
+        <span class="str">"default"</span>,<span class="str">"do"</span>,<span class="str">"double"</span>,<span class="str">"else"</span>,<span class="str">"enum"</span>,<span class="str">"extern"</span>,
+        <span class="str">"float"</span>,<span class="str">"for"</span>,<span class="str">"goto"</span>,<span class="str">"if"</span>,<span class="str">"int"</span>,<span class="str">"long"</span>,
+        <span class="str">"register"</span>,<span class="str">"return"</span>,<span class="str">"short"</span>,<span class="str">"signed"</span>,<span class="str">"sizeof"</span>,
+        <span class="str">"static"</span>,<span class="str">"struct"</span>,<span class="str">"switch"</span>,<span class="str">"typedef"</span>,<span class="str">"union"</span>,
+        <span class="str">"unsigned"</span>,<span class="str">"void"</span>,<span class="str">"volatile"</span>,<span class="str">"while"</span>
+    };
+    <span class="kw">int</span> i = <span class="num">0</span>, j, k, c;
+    <span class="kw">char</span> f[<span class="num">50</span>], ch;
+    FILE *fp;
+
+    printf(<span class="str">"Enter filename: "</span>);
+    scanf(<span class="str">"%s"</span>, f);
+    fp = fopen(f, <span class="str">"r"</span>);
+    <span class="kw">if</span> (fp == NULL) { printf(<span class="str">"Cannot open file.\n"</span>); <span class="kw">return</span> <span class="num">1</span>; }
+
+    k = <span class="num">0</span>;
+    <span class="kw">while</span> ((ch = fgetc(fp)) != EOF) { s[k++] = ch; }
+    s[k] = <span class="str">'\0'</span>;
+    printf(<span class="str">"%s\n---\n"</span>, s);
+    i = <span class="num">0</span>;
+
+    <span class="kw">while</span> (s[i] != <span class="str">'\0'</span>) {
+        j = <span class="num">0</span>; c = <span class="num">0</span>;
+
+        <span class="kw">if</span> (s[i] == <span class="str">'#'</span>) {
+            i++;
+            <span class="kw">while</span> (s[i] != <span class="str">'\n'</span> &amp;&amp; s[i] != <span class="str">'\0'</span>) { printf(<span class="str">"%c"</span>, s[i++]); }
+            printf(<span class="str">" is a preprocessor directive\n"</span>);
+            i++;
+        }
+        <span class="kw">else if</span> (isalpha(s[i]) || s[i] == <span class="str">'_'</span>) {
+            <span class="kw">while</span> (isalpha(s[i]) || isdigit(s[i]) || s[i] == <span class="str">'_'</span>) { t[j++] = s[i++]; }
+            t[j] = <span class="str">'\0'</span>;
+            <span class="kw">for</span> (k = <span class="num">0</span>; k &lt; <span class="num">32</span>; k++) <span class="kw">if</span> (strcmp(t, key[k]) == <span class="num">0</span>) { c = <span class="num">1</span>; <span class="kw">break</span>; }
+            <span class="kw">if</span> (c == <span class="num">1</span>) printf(<span class="str">"%s is a keyword\n"</span>, t);
+            <span class="kw">else if</span> (s[i] == <span class="str">'('</span>) printf(<span class="str">"%s is a method\n"</span>, t);
+            <span class="kw">else</span> printf(<span class="str">"%s is an identifier\n"</span>, t);
+        }
+        <span class="kw">else if</span> (s[i] == <span class="str">'"'</span>) {
+            i++;
+            printf(<span class="str">"\""</span>);
+            <span class="kw">while</span> (s[i] != <span class="str">'"'</span> &amp;&amp; s[i] != <span class="str">'\0'</span>) { printf(<span class="str">"%c"</span>, s[i++]); }
+            printf(<span class="str">"\" is an argument\n"</span>);
+            i++;
+        }
+        <span class="kw">else if</span> (s[i] == <span class="str">'/'</span> &amp;&amp; s[i+<span class="num">1</span>] == <span class="str">'/'</span>) {
+            i += <span class="num">2</span>;
+            <span class="kw">while</span> (s[i] != <span class="str">'\n'</span> &amp;&amp; s[i] != <span class="str">'\0'</span>) { printf(<span class="str">"%c"</span>, s[i++]); }
+            printf(<span class="str">" is a comment\n"</span>);
+        }
+        <span class="kw">else if</span> (s[i] == <span class="str">'/'</span> &amp;&amp; s[i+<span class="num">1</span>] == <span class="str">'*'</span>) {
+            i += <span class="num">2</span>;
+            <span class="kw">while</span> (!(s[i] == <span class="str">'*'</span> &amp;&amp; s[i+<span class="num">1</span>] == <span class="str">'/'</span>)) { printf(<span class="str">"%c"</span>, s[i++]); }
+            i += <span class="num">2</span>;
+            printf(<span class="str">" is a block comment\n"</span>);
+        }
+        <span class="kw">else if</span> (s[i]=='[' || s[i]==']' || s[i]=='(' || s[i]==')' || s[i]=='{' || s[i]=='}') {
+            printf(<span class="str">"%c is a special symbol\n"</span>, s[i++]);
+        }
+        <span class="kw">else if</span> (isdigit(s[i])) {
+            <span class="kw">while</span> (isdigit(s[i]) || s[i] == <span class="str">'.'</span>) { printf(<span class="str">"%c"</span>, s[i++]); }
+            printf(<span class="str">" is a number\n"</span>);
+        }
+        <span class="kw">else if</span> (s[i]=='=' || s[i]=='+' || s[i]=='-' || s[i]=='*' ||
+                 s[i]=='/' || s[i]=='%' || s[i]=='&lt;' || s[i]=='&gt;' ||
+                 s[i]=='&amp;' || s[i]=='|') {
+            printf(<span class="str">"%c is an operator\n"</span>, s[i++]);
+        }
+        <span class="kw">else if</span> (s[i] == <span class="str">';'</span>) { printf(<span class="str">"; is a terminator\n"</span>); i++; }
+        <span class="kw">else</span> i++;
+    }
+    fclose(fp);
+    free(s); free(t);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TASK 2 -->
+<div class="task">
+  <div class="task-header">
+    <span class="task-num">TASK 02</span>
+    <span class="task-title">Recognize strings under a*, a*b+, abb</span>
+  </div>
+  <div class="info-box">
+    <strong>📌 Concept</strong>
+    This uses a <b>Finite Automaton (DFA)</b> with 7 states (0–6) to recognize three regular expressions:<br>
+    • <b>a*</b> → zero or more 'a's (state 1)<br>
+    • <b>a*b+</b> → zero or more 'a's followed by one or more 'b's (states 2, 4)<br>
+    • <b>abb</b> → exactly the string "abb" (state 5)<br>
+    State 6 = reject/error state.
+  </div>
+  <pre>
+<span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;stdlib.h&gt;</span>
+<span class="pp">#include &lt;string.h&gt;</span>
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">char</span> s[<span class="num">20</span>];
+    <span class="kw">int</span> state = <span class="num">0</span>, i = <span class="num">0</span>;
+    <span class="kw">char</span> c;
+
+    printf(<span class="str">"Enter a string: "</span>);
+    scanf(<span class="str">"%s"</span>, s);
+
+    <span class="kw">while</span> (s[i] != <span class="str">'\0'</span>) {
+        <span class="kw">switch</span> (state) {
+            <span class="kw">case</span> <span class="num">0</span>: c = s[i++];
+                <span class="kw">if</span>(c=='a') state=<span class="num">1</span>;
+                <span class="kw">else if</span>(c=='b') state=<span class="num">2</span>;
+                <span class="kw">else</span> state=<span class="num">6</span>;
+                <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">1</span>: c = s[i++];
+                <span class="kw">if</span>(c=='a') state=<span class="num">3</span>;
+                <span class="kw">else if</span>(c=='b') state=<span class="num">4</span>;
+                <span class="kw">else</span> state=<span class="num">6</span>;
+                <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">2</span>: c = s[i++];
+                <span class="kw">if</span>(c=='b') state=<span class="num">2</span>;
+                <span class="kw">else</span> state=<span class="num">6</span>;
+                <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">3</span>: c = s[i++];
+                <span class="kw">if</span>(c=='a') state=<span class="num">3</span>;
+                <span class="kw">else if</span>(c=='b') state=<span class="num">2</span>;
+                <span class="kw">else</span> state=<span class="num">6</span>;
+                <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">4</span>: c = s[i++];
+                <span class="kw">if</span>(c=='b') state=<span class="num">5</span>;
+                <span class="kw">else</span> state=<span class="num">6</span>;
+                <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">5</span>: c = s[i++];
+                <span class="kw">if</span>(c=='b') state=<span class="num">2</span>;
+                <span class="kw">else</span> state=<span class="num">6</span>;
+                <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">6</span>:
+                printf(<span class="str">"\n%s is NOT recognised.\n"</span>, s);
+                <span class="kw">return</span> <span class="num">0</span>;
+        }
+    }
+    <span class="kw">if</span> (state == <span class="num">1</span>)
+        printf(<span class="str">"\n%s is accepted under rule 'a*'\n"</span>, s);
+    <span class="kw">else if</span> (state == <span class="num">2</span> || state == <span class="num">4</span>)
+        printf(<span class="str">"\n%s is accepted under rule 'a*b+'\n"</span>, s);
+    <span class="kw">else if</span> (state == <span class="num">5</span>)
+        printf(<span class="str">"\n%s is accepted under rule 'abb'\n"</span>, s);
+    <span class="kw">else</span>
+        printf(<span class="str">"\n%s is NOT recognised.\n"</span>, s);
+
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TASK 3 -->
+<div class="task">
+  <div class="task-header">
+    <span class="task-num">TASK 03</span>
+    <span class="task-title">Symbol Table Formation</span>
+  </div>
+  <div class="info-box">
+    <strong>📌 Concept</strong>
+    A <b>Symbol Table</b> stores information about each token found in the source program — its name, memory address, and type (identifier or operator). It is used in all phases of the compiler for type checking and code generation. Here, malloc() is used to assign a unique memory address to each symbol.
+  </div>
+  <pre>
+<span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;ctype.h&gt;</span>
+<span class="pp">#include &lt;stdlib.h&gt;</span>
+<span class="pp">#include &lt;string.h&gt;</span>
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> i = <span class="num">0</span>, j = <span class="num">0</span>, x = <span class="num">0</span>, n;
+    <span class="kw">void</span> *p, *addr[<span class="num">20</span>];
+    <span class="kw">char</span> ch, b[<span class="num">30</span>], d[<span class="num">20</span>], c;
+
+    printf(<span class="str">"Enter expression terminated by $: "</span>);
+    <span class="kw">while</span> ((c = getchar()) != <span class="str">'$'</span>) {
+        b[i++] = c;
+    }
+    n = i - <span class="num">1</span>;
+
+    printf(<span class="str">"Given Expression: "</span>);
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt;= n; i++) printf(<span class="str">"%c"</span>, b[i]);
+
+    printf(<span class="str">"\n\nSymbol Table\n"</span>);
+    printf(<span class="str">"Symbol\tAddress\t\tType\n"</span>);
+    printf(<span class="str">"------\t-------\t\t----\n"</span>);
+
+    j = <span class="num">0</span>;
+    <span class="kw">while</span> (j &lt;= n) {
+        c = b[j];
+        <span class="kw">if</span> (isalpha(c)) {
+            p = malloc(<span class="num">1</span>);
+            addr[x] = p;
+            d[x] = c;
+            printf(<span class="str">"%c\t%p\t\tidentifier\n"</span>, c, p);
+            x++; j++;
+        } <span class="kw">else</span> {
+            ch = c;
+            <span class="kw">if</span> (ch == <span class="str">'+'</span> || ch == <span class="str">'-'</span> || ch == <span class="str">'*'</span> || ch == <span class="str">'='</span>) {
+                p = malloc(<span class="num">1</span>);
+                addr[x] = p;
+                d[x] = ch;
+                printf(<span class="str">"%c\t%p\t\toperator\n"</span>, ch, p);
+                x++; j++;
+            } <span class="kw">else</span> {
+                j++;
+            }
+        }
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TASK 4 -->
+<div class="task">
+  <div class="task-header">
+    <span class="task-num">TASK 04</span>
+    <span class="task-title">Predictive Parser Table (LL(1))</span>
+  </div>
+  <div class="info-box">
+    <strong>📌 Concept</strong>
+    A <b>Predictive Parser</b> is a top-down parser that uses <b>FIRST</b> and <b>FOLLOW</b> sets to build a parsing table (LL(1) table). For each non-terminal and terminal, the table tells which production to apply. 'e' is used for epsilon (empty string). Productions are entered in the form <code>A=xyz</code>.
+  </div>
+  <pre>
+<span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;string.h&gt;</span>
+<span class="pp">#include &lt;ctype.h&gt;</span>
+
+<span class="kw">int</span> n, m = <span class="num">0</span>;
+<span class="kw">char</span> a[<span class="num">10</span>][<span class="num">20</span>], f[<span class="num">20</span>];
+<span class="kw">int</span> i = <span class="num">0</span>;
+
+<span class="kw">void</span> <span class="fn">first</span>(<span class="kw">char</span> c);
+<span class="kw">void</span> <span class="fn">follow</span>(<span class="kw">char</span> c);
+
+<span class="kw">void</span> <span class="fn">follow</span>(<span class="kw">char</span> c) {
+    <span class="kw">int</span> k, l;
+    <span class="kw">if</span> (a[<span class="num">0</span>][<span class="num">0</span>] == c) f[m++] = <span class="str">'$'</span>;
+    <span class="kw">for</span> (k = <span class="num">0</span>; k &lt; n; k++) {
+        <span class="kw">for</span> (l = <span class="num">2</span>; l &lt; (<span class="kw">int</span>)strlen(a[k]); l++) {
+            <span class="kw">if</span> (a[k][l] == c) {
+                <span class="kw">if</span> (a[k][l+<span class="num">1</span>] != <span class="str">'\0'</span>) first(a[k][l+<span class="num">1</span>]);
+                <span class="kw">if</span> (a[k][l+<span class="num">1</span>] == <span class="str">'\0'</span> &amp;&amp; c != a[k][<span class="num">0</span>]) follow(a[k][<span class="num">0</span>]);
+            }
+        }
+    }
+}
+
+<span class="kw">void</span> <span class="fn">first</span>(<span class="kw">char</span> c) {
+    <span class="kw">int</span> k;
+    <span class="kw">if</span> (!isupper(c)) { f[m++] = c; <span class="kw">return</span>; }
+    <span class="kw">for</span> (k = <span class="num">0</span>; k &lt; n; k++) {
+        <span class="kw">if</span> (a[k][<span class="num">0</span>] == c) {
+            <span class="kw">if</span> (a[k][<span class="num">2</span>] == <span class="str">'e'</span>) follow(a[k][<span class="num">0</span>]);
+            <span class="kw">else if</span> (islower(a[k][<span class="num">2</span>])) f[m++] = a[k][<span class="num">2</span>];
+            <span class="kw">else</span> first(a[k][<span class="num">2</span>]);
+        }
+    }
+}
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> n1, x, z;
+    <span class="kw">char</span> t[<span class="num">20</span>], c;
+
+    printf(<span class="str">"Enter number of terminals: "</span>);
+    scanf(<span class="str">"%d"</span>, &amp;n1);
+    printf(<span class="str">"Enter terminals (e.g. $abc): "</span>);
+    scanf(<span class="str">"%s"</span>, t);
+
+    printf(<span class="str">"Enter number of productions: "</span>);
+    scanf(<span class="str">"%d"</span>, &amp;n);
+    printf(<span class="str">"Enter productions (epsilon=e, format A=xyz):\n"</span>);
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; n; i++) scanf(<span class="str">"%s"</span>, a[i]);
+
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; n1; i++) printf(<span class="str">"\t%c"</span>, t[i]);
+    printf(<span class="str">"\n"</span>);
+
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; n; i++) {
+        <span class="kw">if</span> (islower(a[i][<span class="num">2</span>]) &amp;&amp; a[i][<span class="num">2</span>] != <span class="str">'e'</span>) {
+            x = <span class="num">0</span>;
+            printf(<span class="str">"%c\t"</span>, a[i][<span class="num">0</span>]);
+            <span class="kw">while</span> (a[i][<span class="num">2</span>] != t[x]) { printf(<span class="str">"\t"</span>); x++; }
+            printf(<span class="str">"%c->%s\n"</span>, a[i][<span class="num">0</span>], a[i]+<span class="num">2</span>);
+        }
+        <span class="kw">if</span> (isupper(a[i][<span class="num">2</span>])) {
+            m = <span class="num">0</span>; first(a[i][<span class="num">2</span>]);
+            printf(<span class="str">"%c\t"</span>, a[i][<span class="num">0</span>]);
+            <span class="kw">for</span> (z = <span class="num">0</span>; z &lt; m; z++) {
+                x = <span class="num">0</span>;
+                <span class="kw">while</span> (f[z] != t[x]) { printf(<span class="str">"\t"</span>); x++; }
+                printf(<span class="str">"%c->%s\t"</span>, a[i][<span class="num">0</span>], a[i]+<span class="num">2</span>);
+            }
+            printf(<span class="str">"\n"</span>);
+        }
+        <span class="kw">if</span> (a[i][<span class="num">2</span>] == <span class="str">'e'</span>) {
+            m = <span class="num">0</span>; follow(a[i][<span class="num">0</span>]);
+            printf(<span class="str">"%c\t"</span>, a[i][<span class="num">0</span>]);
+            <span class="kw">for</span> (z = <span class="num">0</span>; z &lt; m; z++) {
+                x = <span class="num">0</span>;
+                <span class="kw">while</span> (f[z] != t[x]) { printf(<span class="str">"\t"</span>); x++; }
+                printf(<span class="str">"%c->e\t"</span>, a[i][<span class="num">0</span>]);
+            }
+            printf(<span class="str">"\n"</span>);
+        }
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TASK 5 -->
+<div class="task">
+  <div class="task-header">
+    <span class="task-num">TASK 05</span>
+    <span class="task-title">Compute FIRST() and FOLLOW() for a Grammar</span>
+  </div>
+  <div class="info-box">
+    <strong>📌 Concept</strong>
+    <b>FIRST(A)</b> = set of terminals that begin any string derived from A. If A →* ε, add ε too.<br>
+    <b>FOLLOW(A)</b> = set of terminals that can appear immediately to the right of A in any sentential form. Always add <b>$</b> to FOLLOW of the start symbol.<br>
+    These sets are essential for building LL(1) and LALR parse tables. '#' represents ε (epsilon) in this program.
+  </div>
+  <pre>
+<span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;string.h&gt;</span>
+<span class="pp">#include &lt;ctype.h&gt;</span>
+
+<span class="kw">void</span> <span class="fn">followfirst</span>(<span class="kw">char</span>, <span class="kw">int</span>, <span class="kw">int</span>);
+<span class="kw">void</span> <span class="fn">follow</span>(<span class="kw">char</span> c);
+<span class="kw">void</span> <span class="fn">findfirst</span>(<span class="kw">char</span>, <span class="kw">int</span>, <span class="kw">int</span>);
+
+<span class="kw">int</span> count, n = <span class="num">0</span>;
+<span class="kw">char</span> calc_first[<span class="num">10</span>][<span class="num">100</span>];
+<span class="kw">char</span> calc_follow[<span class="num">10</span>][<span class="num">100</span>];
+<span class="kw">int</span> m = <span class="num">0</span>;
+<span class="kw">char</span> production[<span class="num">10</span>][<span class="num">10</span>];
+<span class="kw">char</span> f[<span class="num">10</span>], first_arr[<span class="num">10</span>];
+<span class="kw">int</span> k;
+<span class="kw">char</span> ck;
+<span class="kw">int</span> e;
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> jm = <span class="num">0</span>, km = <span class="num">0</span>, i, kay;
+    <span class="kw">char</span> c, done[<span class="num">10</span>], donee[<span class="num">10</span>];
+    <span class="kw">int</span> ptr = -<span class="num">1</span>;
+
+    count = <span class="num">8</span>;
+    strcpy(production[<span class="num">0</span>], <span class="str">"X=TnS"</span>);
+    strcpy(production[<span class="num">1</span>], <span class="str">"X=Rm"</span>);
+    strcpy(production[<span class="num">2</span>], <span class="str">"T=q"</span>);
+    strcpy(production[<span class="num">3</span>], <span class="str">"T=#"</span>);
+    strcpy(production[<span class="num">4</span>], <span class="str">"S=p"</span>);
+    strcpy(production[<span class="num">5</span>], <span class="str">"S=#"</span>);
+    strcpy(production[<span class="num">6</span>], <span class="str">"R=om"</span>);
+    strcpy(production[<span class="num">7</span>], <span class="str">"R=ST"</span>);
+
+    <span class="kw">for</span> (k = <span class="num">0</span>; k &lt; count; k++)
+        <span class="kw">for</span> (kay = <span class="num">0</span>; kay &lt; <span class="num">100</span>; kay++)
+            calc_first[k][kay] = <span class="str">'!'</span>;
+
+    <span class="kw">int</span> point1 = <span class="num">0</span>, point2, xxx;
+    <span class="kw">for</span> (k = <span class="num">0</span>; k &lt; count; k++) {
+        c = production[k][<span class="num">0</span>]; point2 = <span class="num">0</span>; xxx = <span class="num">0</span>;
+        <span class="kw">for</span> (kay = <span class="num">0</span>; kay &lt;= ptr; kay++) <span class="kw">if</span> (c == done[kay]) xxx = <span class="num">1</span>;
+        <span class="kw">if</span> (xxx == <span class="num">1</span>) <span class="kw">continue</span>;
+        findfirst(c, <span class="num">0</span>, <span class="num">0</span>);
+        ptr++; done[ptr] = c;
+        printf(<span class="str">"First(%c) = { "</span>, c);
+        calc_first[point1][point2++] = c;
+        <span class="kw">for</span> (i = jm; i &lt; n; i++) {
+            <span class="kw">int</span> lark = <span class="num">0</span>, chk = <span class="num">0</span>;
+            <span class="kw">for</span> (lark = <span class="num">0</span>; lark &lt; point2; lark++)
+                <span class="kw">if</span> (first_arr[i] == calc_first[point1][lark]) { chk = <span class="num">1</span>; <span class="kw">break</span>; }
+            <span class="kw">if</span> (!chk) { printf(<span class="str">"%c, "</span>, first_arr[i]); calc_first[point1][point2++] = first_arr[i]; }
+        }
+        printf(<span class="str">"}\n"</span>); jm = n; point1++;
+    }
+
+    printf(<span class="str">"\n---\n\n"</span>);
+    ptr = -<span class="num">1</span>; point1 = <span class="num">0</span>;
+    <span class="kw">for</span> (k = <span class="num">0</span>; k &lt; count; k++)
+        <span class="kw">for</span> (kay = <span class="num">0</span>; kay &lt; <span class="num">100</span>; kay++)
+            calc_follow[k][kay] = <span class="str">'!'</span>;
+
+    <span class="kw">for</span> (e = <span class="num">0</span>; e &lt; count; e++) {
+        ck = production[e][<span class="num">0</span>]; point2 = <span class="num">0</span>; xxx = <span class="num">0</span>;
+        <span class="kw">for</span> (kay = <span class="num">0</span>; kay &lt;= ptr; kay++) <span class="kw">if</span> (ck == donee[kay]) xxx = <span class="num">1</span>;
+        <span class="kw">if</span> (xxx == <span class="num">1</span>) <span class="kw">continue</span>;
+        follow(ck); ptr++; donee[ptr] = ck;
+        printf(<span class="str">"Follow(%c) = { "</span>, ck);
+        calc_follow[point1][point2++] = ck;
+        <span class="kw">for</span> (i = km; i &lt; m; i++) {
+            <span class="kw">int</span> lark = <span class="num">0</span>, chk = <span class="num">0</span>;
+            <span class="kw">for</span> (lark = <span class="num">0</span>; lark &lt; point2; lark++)
+                <span class="kw">if</span> (f[i] == calc_follow[point1][lark]) { chk = <span class="num">1</span>; <span class="kw">break</span>; }
+            <span class="kw">if</span> (!chk) { printf(<span class="str">"%c, "</span>, f[i]); calc_follow[point1][point2++] = f[i]; }
+        }
+        printf(<span class="str">"}\n\n"</span>); km = m; point1++;
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="kw">void</span> <span class="fn">follow</span>(<span class="kw">char</span> c) {
+    <span class="kw">int</span> i, j;
+    <span class="kw">if</span> (production[<span class="num">0</span>][<span class="num">0</span>] == c) f[m++] = <span class="str">'$'</span>;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; count; i++) {
+        <span class="kw">for</span> (j = <span class="num">2</span>; j &lt; <span class="num">10</span>; j++) {
+            <span class="kw">if</span> (production[i][j] == c) {
+                <span class="kw">if</span> (production[i][j+<span class="num">1</span>] != <span class="str">'\0'</span>) followfirst(production[i][j+<span class="num">1</span>], i, j+<span class="num">2</span>);
+                <span class="kw">if</span> (production[i][j+<span class="num">1</span>] == <span class="str">'\0'</span> &amp;&amp; c != production[i][<span class="num">0</span>]) follow(production[i][<span class="num">0</span>]);
+            }
+        }
+    }
+}
+
+<span class="kw">void</span> <span class="fn">findfirst</span>(<span class="kw">char</span> c, <span class="kw">int</span> q1, <span class="kw">int</span> q2) {
+    <span class="kw">int</span> j;
+    <span class="kw">if</span> (!isupper(c)) { first_arr[n++] = c; <span class="kw">return</span>; }
+    <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; count; j++) {
+        <span class="kw">if</span> (production[j][<span class="num">0</span>] == c) {
+            <span class="kw">if</span> (production[j][<span class="num">2</span>] == <span class="str">'#'</span>) {
+                <span class="kw">if</span> (production[q1][q2] == <span class="str">'\0'</span>) first_arr[n++] = <span class="str">'#'</span>;
+                <span class="kw">else if</span> (q1 != <span class="num">0</span> || q2 != <span class="num">0</span>) findfirst(production[q1][q2], q1, q2+<span class="num">1</span>);
+                <span class="kw">else</span> first_arr[n++] = <span class="str">'#'</span>;
+            } <span class="kw">else if</span> (!isupper(production[j][<span class="num">2</span>])) {
+                first_arr[n++] = production[j][<span class="num">2</span>];
+            } <span class="kw">else</span> {
+                findfirst(production[j][<span class="num">2</span>], j, <span class="num">3</span>);
+            }
+        }
+    }
+}
+
+<span class="kw">void</span> <span class="fn">followfirst</span>(<span class="kw">char</span> c, <span class="kw">int</span> c1, <span class="kw">int</span> c2) {
+    <span class="kw">int</span> i, j;
+    <span class="kw">if</span> (!isupper(c)) { f[m++] = c; <span class="kw">return</span>; }
+    i = <span class="num">0</span>; j = <span class="num">1</span>;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; count; i++) <span class="kw">if</span> (calc_first[i][<span class="num">0</span>] == c) <span class="kw">break</span>;
+    <span class="kw">while</span> (calc_first[i][j] != <span class="str">'!'</span>) {
+        <span class="kw">if</span> (calc_first[i][j] != <span class="str">'#'</span>) {
+            f[m++] = calc_first[i][j];
+        } <span class="kw">else</span> {
+            <span class="kw">if</span> (production[c1][c2] == <span class="str">'\0'</span>) follow(production[c1][<span class="num">0</span>]);
+            <span class="kw">else</span> followfirst(production[c1][c2], c1, c2+<span class="num">1</span>);
+        }
+        j++;
+    }
+}</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TASK 6 -->
+<div class="task">
+  <div class="task-header">
+    <span class="task-num">TASK 06</span>
+    <span class="task-title">Operator Precedence Parser (Grammar Check)</span>
+  </div>
+  <div class="info-box">
+    <strong>📌 Concept</strong>
+    An <b>Operator Grammar</b> is one where no production has two adjacent non-terminals and none has ε. An <b>Operator Precedence Parser</b> works bottom-up using precedence relations (&lt;·, ·=·, ·&gt;) between operators. This program checks whether a given grammar qualifies as an operator grammar by verifying that all productions contain arithmetic operators (+, -, *, /).
+  </div>
+  <pre>
+<span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;stdlib.h&gt;</span>
+<span class="pp">#include &lt;string.h&gt;</span>
+
+<span class="kw">void</span> <span class="fn">notOperator</span>() {
+    printf(<span class="str">"Not an operator grammar\n"</span>);
+    exit(<span class="num">0</span>);
+}
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">char</span> grm[<span class="num">20</span>][<span class="num">20</span>];
+    <span class="kw">int</span> i, n, flag = <span class="num">0</span>;
+
+    printf(<span class="str">"Enter number of productions: "</span>);
+    scanf(<span class="str">"%d"</span>, &amp;n);
+    printf(<span class="str">"Enter productions (format A=BxC):\n"</span>);
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; n; i++) scanf(<span class="str">"%s"</span>, grm[i]);
+
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; n; i++) {
+        <span class="kw">char</span> op = grm[i][<span class="num">3</span>];
+        <span class="kw">if</span> (grm[i][<span class="num">2</span>] == <span class="str">'$'</span>) notOperator();
+        <span class="kw">if</span> (op == <span class="str">'+'</span> || op == <span class="str">'-'</span> || op == <span class="str">'*'</span> || op == <span class="str">'/'</span>)
+            flag = <span class="num">1</span>;
+        <span class="kw">else</span>
+            notOperator();
+    }
+    <span class="kw">if</span> (flag == <span class="num">1</span>) printf(<span class="str">"Operator grammar\n"</span>);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+  <div class="note"><strong>Sample input:</strong> n=2, then A=A+A and B=B*B → Output: "Operator grammar"</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TASK 7 -->
+<div class="task">
+  <div class="task-header">
+    <span class="task-num">TASK 07</span>
+    <span class="task-title">Shift-Reduce Parser</span>
+  </div>
+  <div class="info-box">
+    <strong>📌 Concept</strong>
+    <b>Shift-Reduce Parsing</b> is a bottom-up parsing technique. It uses a stack and two operations:<br>
+    • <b>Shift</b>: Push the next input symbol onto the stack.<br>
+    • <b>Reduce</b>: If the top of the stack matches the RHS of a production, pop those symbols and push the LHS.<br>
+    Parsing succeeds when only the start symbol remains on the stack and input is exhausted. Productions are entered as <code>E->E+E</code>.
+  </div>
+  <pre>
+<span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;string.h&gt;</span>
+
+<span class="kw">int</span> i, j, l, n, top = <span class="num">0</span>, k, p, sl;
+<span class="kw">char</span> in_str[<span class="num">20</span>], apro[<span class="num">20</span>], pro[<span class="num">20</span>][<span class="num">20</span>], sta[<span class="num">20</span>], stk[<span class="num">20</span>];
+<span class="kw">int</span> s[<span class="num">10</span>];
+
+<span class="kw">void</span> <span class="fn">printState</span>() {
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt;= top; i++) printf(<span class="str">"%c"</span>, stk[i]);
+    printf(<span class="str">"\t"</span>);
+    <span class="kw">for</span> (i = l; in_str[i] != <span class="str">'\0'</span>; i++) printf(<span class="str">"%c"</span>, in_str[i]);
+    printf(<span class="str">"\t"</span>);
+}
+
+<span class="kw">void</span> <span class="fn">shiftReduce</span>() {
+    <span class="kw">int</span> pp = <span class="num">0</span>, mm;
+    <span class="kw">if</span> (in_str[l] != <span class="str">'$'</span>) stk[++top] = in_str[l++];
+    printf(<span class="str">"Shift:%c\n"</span>, stk[top]);
+
+    <span class="kw">while</span> (<span class="num">1</span>) {
+        printState();
+        <span class="kw">if</span> (stk[top - pp] == <span class="str">'$'</span>) { printf(<span class="str">"\n"</span>); <span class="kw">break</span>; }
+        <span class="kw">for</span> (mm = top - pp, k = <span class="num">0</span>; mm &lt;= top; mm++, k++) sta[k] = stk[mm];
+        sta[k] = <span class="str">'\0'</span>;
+        sl = strlen(sta);
+        <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; n; i++) {
+            <span class="kw">if</span> (sl == s[i]) {
+                <span class="kw">for</span> (j = <span class="num">3</span>, k = <span class="num">0</span>; pro[i][j] != <span class="str">'\0'</span>; j++) apro[k++] = pro[i][j];
+                apro[k] = <span class="str">'\0'</span>;
+                <span class="kw">if</span> (strcmp(sta, apro) == <span class="num">0</span>) {
+                    top = top - pp; pp = <span class="num">0</span>;
+                    stk[top] = pro[i][<span class="num">0</span>];
+                    stk[top+<span class="num">1</span>] = <span class="str">'\0'</span>;
+                    printf(<span class="str">"Reduce: %s\n"</span>, pro[i]);
+                    printState(); printf(<span class="str">"\n"</span>);
+                }
+            }
+        }
+        pp++;
+        <span class="kw">if</span> (pp > top + <span class="num">1</span>) <span class="kw">break</span>;
+    }
+}
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    printf(<span class="str">"Enter number of productions: "</span>);
+    scanf(<span class="str">"%d"</span>, &amp;n);
+    printf(<span class="str">"Enter productions (e.g. E->E+E):\n"</span>);
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; n; i++) {
+        scanf(<span class="str">"%s"</span>, pro[i]);
+        s[i] = strlen(pro[i]) - <span class="num">3</span>;
+    }
+    printf(<span class="str">"Enter input string (end with $): "</span>);
+    scanf(<span class="str">"%s"</span>, in_str);
+
+    printf(<span class="str">"\nStack\t\tInput\t\tAction\n"</span>);
+    printf(<span class="str">"-----\t\t-----\t\t------\n"</span>);
+
+    stk[top] = <span class="str">'$'</span>; l = <span class="num">0</span>;
+    printState(); printf(<span class="str">"\n"</span>);
+
+    <span class="kw">while</span> (in_str[l] != <span class="str">'$'</span>) shiftReduce();
+
+    <span class="kw">if</span> (stk[top] == pro[<span class="num">0</span>][<span class="num">0</span>] &amp;&amp; stk[top+<span class="num">1</span>] == <span class="str">'\0'</span>)
+        printf(<span class="str">"ACCEPT\n"</span>);
+    <span class="kw">else</span>
+        printf(<span class="str">"ERROR\n"</span>);
+
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TASK 8 -->
+<div class="task">
+  <div class="task-header">
+    <span class="task-num">TASK 08</span>
+    <span class="task-title">LALR Parser using LEX + YACC</span>
+  </div>
+  <div class="info-box">
+    <strong>📌 Concept</strong>
+    <b>LALR(1)</b> (Look-Ahead LR) is the most commonly used bottom-up parser in practice (used by YACC). It combines LR(0) states with 1-token lookahead. YACC generates the LALR parser automatically from grammar rules. LEX handles tokenization (e.g., recognising numbers), YACC handles the grammar (e.g., expr + term). Compile with: <code>lex file.l &amp;&amp; yacc -d file.y &amp;&amp; gcc y.tab.c lex.yy.c -o out</code>
+  </div>
+  <pre>
+<span class="cm">/* ── file: calc.l (LEX file) ── */</span>
+%{
+<span class="pp">#include</span> <span class="str">"y.tab.h"</span>
+%}
+%%
+[<span class="num">0-9</span>]+    { yylval.dval = atof(yytext); <span class="kw">return</span> DIGIT; }
+\n|.      { <span class="kw">return</span> yytext[<span class="num">0</span>]; }
+%%
+<span class="kw">int</span> <span class="fn">yywrap</span>() { <span class="kw">return</span> <span class="num">1</span>; }
+
+
+<span class="cm">/* ── file: calc.y (YACC file) ── */</span>
+%{
+<span class="pp">#include &lt;stdio.h&gt;</span>
+%}
+%union { <span class="kw">double</span> dval; }
+%token &lt;dval&gt; DIGIT
+%type  &lt;dval&gt; expr term factor
+%%
+line   : expr <span class="str">'\n'</span>          { printf(<span class="str">"%g\n"</span>, $<span class="num">1</span>); }
+       ;
+expr   : expr <span class="str">'+'</span> term      { $$ = $<span class="num">1</span> + $<span class="num">3</span>; }
+       | term
+       ;
+term   : term <span class="str">'*'</span> factor    { $$ = $<span class="num">1</span> * $<span class="num">3</span>; }
+       | factor
+       ;
+factor : <span class="str">'('</span> expr <span class="str">')'</span>      { $$ = $<span class="num">2</span>; }
+       | DIGIT
+       ;
+%%
+<span class="kw">int</span> <span class="fn">main</span>() { yyparse(); <span class="kw">return</span> <span class="num">0</span>; }
+<span class="kw">void</span> <span class="fn">yyerror</span>(<span class="kw">char</span> *s) { printf(<span class="str">"%s\n"</span>, s); }
+
+
+<span class="cm">/* ── Compile commands ── */</span>
+<span class="cm">// $ lex calc.l</span>
+<span class="cm">// $ yacc -d calc.y</span>
+<span class="cm">// $ gcc y.tab.c lex.yy.c -o calc -ll</span>
+<span class="cm">// $ ./calc</span>
+<span class="cm">// Input: 4+3   Output: 7</span></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TASK 9 -->
+<div class="task">
+  <div class="task-header">
+    <span class="task-num">TASK 09</span>
+    <span class="task-title">Lexical Analyser using LEX Tool</span>
+  </div>
+  <div class="info-box">
+    <strong>📌 Concept</strong>
+    <b>LEX</b> is a tool that automatically generates a lexical analyser from regular expression-based rules. A .l file has three sections separated by <code>%%</code>: definitions, rules (pattern → action), and user code. The generated <code>yylex()</code> function scans input and fires the matching action. Compile with: <code>lex file.l &amp;&amp; gcc lex.yy.c -o out -ll</code>
+  </div>
+  <pre>
+<span class="cm">/* ── file: lexical.l ── */</span>
+%{
+<span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> COMMENT = <span class="num">0</span>, cnt = <span class="num">0</span>;
+%}
+
+identifier [a-zA-Z][a-zA-Z0-9]*
+
+%%
+<span class="pp">#.*</span>   { printf(<span class="str">"\n%s is a PREPROCESSOR DIRECTIVE"</span>, yytext); }
+
+<span class="kw">int</span>|float|char|double|while|for|do|if|break|continue|
+void|switch|case|long|struct|const|typedef|return|else|goto
+      { printf(<span class="str">"\n%s is a KEYWORD"</span>, yytext); }
+
+<span class="str">"/*"</span>  { COMMENT = <span class="num">1</span>; }
+<span class="str">"*/"</span>  { COMMENT = <span class="num">0</span>; cnt++; }
+
+{identifier}\(
+      { <span class="kw">if</span> (!COMMENT) printf(<span class="str">"\n%s is a FUNCTION"</span>, yytext); }
+\{    { <span class="kw">if</span> (!COMMENT) printf(<span class="str">"\nBLOCK BEGINS"</span>); }
+\}    { <span class="kw">if</span> (!COMMENT) printf(<span class="str">"\nBLOCK ENDS"</span>); }
+
+{identifier}(\[[<span class="num">0-9</span>]*\])?
+      { <span class="kw">if</span> (!COMMENT) printf(<span class="str">"\n%s is an IDENTIFIER"</span>, yytext); }
+
+\".*\"
+      { <span class="kw">if</span> (!COMMENT) printf(<span class="str">"\n%s is a STRING"</span>, yytext); }
+
+[<span class="num">0-9</span>]+
+      { <span class="kw">if</span> (!COMMENT) printf(<span class="str">"\n%s is a NUMBER"</span>, yytext); }
+
+=     { <span class="kw">if</span> (!COMMENT) printf(<span class="str">"\n%s is an ASSIGNMENT OPERATOR"</span>, yytext); }
+
+<span class="str">"&lt;="</span>|<span class="str">"&gt;="</span>|<span class="str">"&lt;"</span>|<span class="str">"=="</span>|<span class="str">"&gt;"</span>
+      { <span class="kw">if</span> (!COMMENT) printf(<span class="str">"\n%s is a RELATIONAL OPERATOR"</span>, yytext); }
+
+\)(\;)?  { <span class="kw">if</span> (!COMMENT) { ECHO; printf(<span class="str">"\n"</span>); } }
+\(    { ECHO; }
+[ \t\n]  ;  <span class="cm">/* skip whitespace */</span>
+%%
+
+<span class="kw">int</span> <span class="fn">main</span>(<span class="kw">int</span> argc, <span class="kw">char</span> **argv) {
+    <span class="kw">if</span> (argc > <span class="num">1</span>) {
+        FILE *fp = fopen(argv[<span class="num">1</span>], <span class="str">"r"</span>);
+        <span class="kw">if</span> (!fp) { printf(<span class="str">"Cannot open file\n"</span>); <span class="kw">return</span> <span class="num">1</span>; }
+        yyin = fp;
+    }
+    yylex();
+    printf(<span class="str">"\n\nTotal comments: %d\n"</span>, cnt);
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+<span class="kw">int</span> <span class="fn">yywrap</span>() { <span class="kw">return</span> <span class="num">1</span>; }
+
+<span class="cm">/* Compile: lex lexical.l && gcc lex.yy.c -o lex_out -ll && ./lex_out source.c */</span></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TASK 10 -->
+<div class="task">
+  <div class="task-header">
+    <span class="task-num">TASK 10</span>
+    <span class="task-title">Simple Arithmetic Calculator using LEX</span>
+  </div>
+  <div class="info-box">
+    <strong>📌 Concept</strong>
+    This LEX program implements a calculator by defining patterns for digits and operators. When a digit token is matched, <code>atof()</code> converts the text to float. An operator flag (<code>op</code>) remembers which operation to perform. On newline, the result is printed. This demonstrates how LEX can be used as a simple interpreter without YACC.
+  </div>
+  <pre>
+<span class="cm">/* ── file: calc.l ── */</span>
+%{
+<span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;stdlib.h&gt;</span>
+<span class="pp">#include &lt;math.h&gt;</span>
+<span class="kw">int</span> op = <span class="num">0</span>, pw;
+<span class="kw">float</span> a, b;
+
+<span class="kw">void</span> <span class="fn">digi</span>() {
+    <span class="kw">if</span> (op == <span class="num">0</span>) {
+        a = atof(yytext);
+    } <span class="kw">else</span> {
+        b = atof(yytext);
+        <span class="kw">switch</span>(op) {
+            <span class="kw">case</span> <span class="num">1</span>: a = a + b; <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">2</span>: a = a - b; <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">3</span>: a = a * b; <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">4</span>: a = a / b; <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="num">5</span>: a = pow(a, b); <span class="kw">break</span>;
+        }
+        op = <span class="num">0</span>;
+    }
+}
+%}
+
+dig  [<span class="num">0-9</span>]+|([<span class="num">0-9</span>]*)<span class="str">"."</span>([<span class="num">0-9</span>]+)
+
+%%
+{dig}  { digi(); }
+<span class="str">"+"</span>    { op = <span class="num">1</span>; }
+<span class="str">"-"</span>    { op = <span class="num">2</span>; }
+<span class="str">"*"</span>    { op = <span class="num">3</span>; }
+<span class="str">"/"</span>    { op = <span class="num">4</span>; }
+<span class="str">"^"</span>    { op = <span class="num">5</span>; }
+\n     { printf(<span class="str">"Result: %f\n\n"</span>, a); a = <span class="num">0</span>; }
+[ \t]  ;
+%%
+
+<span class="kw">int</span> <span class="fn">main</span>() { yylex(); <span class="kw">return</span> <span class="num">0</span>; }
+<span class="kw">int</span> <span class="fn">yywrap</span>() { <span class="kw">return</span> <span class="num">1</span>; }
+
+<span class="cm">/* Compile: lex calc.l && gcc lex.yy.c -o calc -ll -lm && ./calc */</span>
+<span class="cm">/* Input:  4+3   Output: Result: 7.000000   */</span></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TASK 11 -->
+<div class="task">
+  <div class="task-header">
+    <span class="task-num">TASK 11</span>
+    <span class="task-title">Count Characters, Words, Lines, Special Chars using LEX</span>
+  </div>
+  <div class="info-box">
+    <strong>📌 Concept</strong>
+    This LEX program counts statistics of a text file by matching character classes with patterns:<br>
+    • <code>\n</code> increments line and word counts (end of line = end of a word).<br>
+    • Tabs/spaces increment word count (word separators).<br>
+    • Uppercase, lowercase, digits, and special chars are counted separately.<br>
+    <code>yyin</code> is set to read from a file named <b>myfile.txt</b>.
+  </div>
+  <pre>
+<span class="cm">/* ── file: count.l ── */</span>
+%{
+<span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="kw">int</span> lines=<span class="num">0</span>, words=<span class="num">0</span>, upper=<span class="num">0</span>, lower=<span class="num">0</span>, digits=<span class="num">0</span>, special=<span class="num">0</span>;
+%}
+%%
+\n              { lines++; words++; }
+[\t ]           { words++; }
+[A-Z]           { upper++; }
+[a-z]           { lower++; }
+[<span class="num">0-9</span>]           { digits++; }
+.               { special++; }
+%%
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    yyin = fopen(<span class="str">"myfile.txt"</span>, <span class="str">"r"</span>);
+    <span class="kw">if</span> (!yyin) { printf(<span class="str">"Cannot open myfile.txt\n"</span>); <span class="kw">return</span> <span class="num">1</span>; }
+    yylex();
+    <span class="kw">int</span> total = upper + lower + digits + special;
+    printf(<span class="str">"This file contains:\n"</span>);
+    printf(<span class="str">"  Lines          : %d\n"</span>, lines);
+    printf(<span class="str">"  Words          : %d\n"</span>, words);
+    printf(<span class="str">"  Uppercase      : %d\n"</span>, upper);
+    printf(<span class="str">"  Lowercase      : %d\n"</span>, lower);
+    printf(<span class="str">"  Digits         : %d\n"</span>, digits);
+    printf(<span class="str">"  Special chars  : %d\n"</span>, special);
+    printf(<span class="str">"  Total chars    : %d\n"</span>, total);
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+<span class="kw">int</span> <span class="fn">yywrap</span>() { <span class="kw">return</span> <span class="num">1</span>; }
+
+<span class="cm">/* Compile: lex count.l && gcc lex.yy.c -o count -ll && ./count */</span></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ TASK 12 -->
+<div class="task">
+  <div class="task-header">
+    <span class="task-num">TASK 12</span>
+    <span class="task-title">Code Generation for Intermediate Code</span>
+  </div>
+  <div class="info-box">
+    <strong>📌 Concept</strong>
+    <b>Code Generation</b> is the final phase of a compiler. It translates intermediate code (3-address code like <code>a=b+c</code>) into target machine code (assembly-like instructions). Key operations:<br>
+    • <b>MOV</b> var, R1 → load variable into register.<br>
+    • <b>ADD/SUB/MUL/DIV</b> src, dst → perform operation.<br>
+    • <b>MOV</b> R1, var → store result back.<br>
+    Register allocation is tracked to avoid redundant loads.
+  </div>
+  <pre>
+<span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;string.h&gt;</span>
+
+<span class="kw">struct</span> { <span class="kw">char</span> var; } reg[<span class="num">10</span>];
+<span class="kw">int</span> noreg = <span class="num">0</span>;
+<span class="kw">char</span> st[<span class="num">10</span>][<span class="num">10</span>];
+<span class="kw">int</span> nost;
+
+<span class="kw">char</span> *opcode[<span class="num">4</span>] = {<span class="str">"ADD"</span>, <span class="str">"SUB"</span>, <span class="str">"MUL"</span>, <span class="str">"DIV"</span>};
+<span class="kw">char</span>  oper[<span class="num">4</span>] = {<span class="str">'+'</span>, <span class="str">'-'</span>, <span class="str">'*'</span>, <span class="str">'/'</span>};
+
+<span class="kw">char</span>* <span class="fn">toOpcode</span>(<span class="kw">char</span> op) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">4</span>; i++)
+        <span class="kw">if</span> (oper[i] == op) <span class="kw">return</span> opcode[i];
+    <span class="kw">return</span> <span class="str">"???"</span>;
+}
+
+<span class="kw">int</span> <span class="fn">inRegister</span>(<span class="kw">char</span> var) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i &lt;= noreg; i++)
+        <span class="kw">if</span> (reg[i].var == var) <span class="kw">return</span> i;
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> i, regno1 = <span class="num">1</span>, flag = <span class="num">0</span>;
+
+    printf(<span class="str">"Enter number of 3-address statements: "</span>);
+    scanf(<span class="str">"%d"</span>, &amp;nost);
+    printf(<span class="str">"Enter statements (e.g. a=b+c):\n"</span>);
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; nost; i++) scanf(<span class="str">"%s"</span>, st[i]);
+
+    <span class="cm">/* check if consecutive statements share operands (optimization) */</span>
+    flag = <span class="num">0</span>;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; nost - <span class="num">1</span>; i++)
+        <span class="kw">if</span> (st[i][<span class="num">2</span>] != st[i+<span class="num">1</span>][<span class="num">2</span>] || st[i][<span class="num">3</span>] != st[i+<span class="num">1</span>][<span class="num">3</span>] || st[i][<span class="num">4</span>] != st[i+<span class="num">1</span>][<span class="num">4</span>])
+            flag = <span class="num">1</span>;
+
+    printf(<span class="str">"\n%-15s %s\n"</span>, <span class="str">"Statement"</span>, <span class="str">"Target Code"</span>);
+    printf(<span class="str">"---------------------------------------------\n"</span>);
+
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; nost; i++) {
+        printf(<span class="str">"%-15s"</span>, st[i]);
+        <span class="cm">/* Load first operand if not already in register */</span>
+        <span class="kw">if</span> (!inRegister(st[i][<span class="num">2</span>])) {
+            noreg++;
+            printf(<span class="str">"MOV %c, R%d\n"</span>, st[i][<span class="num">2</span>], noreg);
+            reg[noreg].var = st[i][<span class="num">2</span>];
+            regno1 = noreg;
+            printf(<span class="str">"               "</span>);
+        }
+        <span class="cm">/* Apply operation with second operand */</span>
+        <span class="kw">if</span> (inRegister(st[i][<span class="num">4</span>])) {
+            printf(<span class="str">"%s R%d, R%d\n"</span>, toOpcode(st[i][<span class="num">3</span>]), inRegister(st[i][<span class="num">4</span>]), regno1);
+        } <span class="kw">else</span> {
+            printf(<span class="str">"%s %c, R%d\n"</span>, toOpcode(st[i][<span class="num">3</span>]), st[i][<span class="num">4</span>], regno1);
+        }
+        reg[regno1].var = st[i][<span class="num">0</span>];
+        printf(<span class="str">"               MOV R%d, %c\n"</span>, regno1, st[i][<span class="num">0</span>]);
+
+        <span class="kw">if</span> (flag == <span class="num">0</span> &amp;&amp; i &lt; nost - <span class="num">1</span>) {
+            printf(<span class="str">"%-15sMOV R%d, %c\n"</span>, st[i+<span class="num">1</span>], regno1, st[i+<span class="num">1</span>][<span class="num">0</span>]);
+            <span class="kw">break</span>;
+        }
+    }
+    printf(<span class="str">"\nCode Generation Completed.\n"</span>);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+  <div class="note"><strong>Sample input:</strong> n=2, statements: <code>a=b+c</code> and <code>x=b+c</code>. Since operands are the same (flag=0), the second result reuses the same register — that's the optimization.</div>
+</div>
+
+<div style="text-align:center; padding: 30px; color: var(--muted); font-size: 0.78rem;">
+  GR22A3121 · Compiler Design Lab · All 12 Tasks · Good luck on your exam! 🎯
+</div>
+</body>
+</html>
